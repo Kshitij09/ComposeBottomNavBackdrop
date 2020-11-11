@@ -7,10 +7,7 @@ import androidx.compose.animation.core.AnimationEndReason.Interrupted
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offsetPx
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -256,6 +253,7 @@ fun HorizontalBackdropScaffold(
     peekWidth: Dp = HorizontalBackdropScaffoldConstants.DefaultPeekWidth,
     headerWidth: Dp = HorizontalBackdropScaffoldConstants.DefaultHeaderWidth,
     stickyFrontLayer: Boolean = true,
+    persistentNavRail: Boolean = true,
     backLayerBackgroundColor: Color = MaterialTheme.colors.primary,
     backLayerContentColor: Color = contentColorFor(backLayerBackgroundColor),
     frontLayerShape: Shape = HorizontalBackdropScaffoldConstants.DefaultFrontLayerShape,
@@ -263,6 +261,7 @@ fun HorizontalBackdropScaffold(
     frontLayerBackgroundColor: Color = MaterialTheme.colors.surface,
     frontLayerContentColor: Color = contentColorFor(frontLayerBackgroundColor),
     frontLayerScrimColor: Color = HorizontalBackdropScaffoldConstants.DefaultFrontLayerScrimColor,
+    navRail: @Composable () -> Unit,
     snackbarHost: @Composable (SnackbarHostState) -> Unit = { SnackbarHost(it) },
     backLayerContent: @Composable () -> Unit,
     frontLayerContent: @Composable () -> Unit
@@ -271,7 +270,14 @@ fun HorizontalBackdropScaffold(
     val headerWidthPx = with(DensityAmbient.current) { headerWidth.toPx() }
 
     val backLayer = @Composable {
-        BackLayerTransition(scaffoldState.targetValue, backLayerContent)
+        if (persistentNavRail) {
+            Row {
+                navRail()
+                backLayerContent()
+            }
+        } else {
+            BackLayerTransition(scaffoldState.targetValue, navRail, backLayerContent)
+        }
     }
     val calculateBackLayerConstraints: (Constraints) -> Constraints = {
         it.copy(minWidth = 0, minHeight = 0).offset(horizontal = -headerWidthPx.roundToInt())
@@ -366,6 +372,7 @@ private fun Scrim(
 @Composable
 private fun BackLayerTransition(
     target: BackdropValue,
+    navRail: @Composable () -> Unit,
     content: @Composable () -> Unit
 ) {
     // The progress of the animation between Revealed (0) and Concealed (2).
@@ -375,9 +382,18 @@ private fun BackLayerTransition(
     )
     val animationSlideOffset = with(DensityAmbient.current) { AnimationSlideOffset.toPx() }
 
+    val navRailFloat = (animationProgress - 1).coerceIn(0f, 1f)
     val contentFloat = (1 - animationProgress).coerceIn(0f, 1f)
 
     Box {
+        Box(
+            Modifier.zIndex(navRailFloat).drawLayer(
+                alpha = navRailFloat,
+                translationX = (1 - navRailFloat) * animationSlideOffset
+            )
+        ) {
+            navRail()
+        }
         Box(
             Modifier.zIndex(contentFloat).drawLayer(
                 alpha = contentFloat,

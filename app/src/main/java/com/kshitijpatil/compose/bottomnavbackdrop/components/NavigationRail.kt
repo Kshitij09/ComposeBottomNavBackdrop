@@ -2,14 +2,12 @@ package com.kshitijpatil.compose.bottomnavbackdrop.components
 
 import androidx.annotation.FloatRange
 import androidx.compose.animation.animate
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.VectorizedAnimationSpec
-import androidx.compose.foundation.AmbientContentColor
-import androidx.compose.foundation.Interaction
-import androidx.compose.foundation.InteractionState
-import androidx.compose.foundation.ProvideTextStyle
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.LastBaseline
 import androidx.compose.material.*
@@ -28,8 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.max
-import kotlin.math.roundToInt
 
 // TODO(1): Fix Docstrings
 
@@ -75,7 +71,7 @@ fun NavigationRail(
     ) {
         Column(
             Modifier.fillMaxHeight().preferredWidth(NavigationRailWidth),
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.Center,
             children = content
         )
     }
@@ -133,7 +129,6 @@ fun NavigationRailItem(
     // before the item is considered selected, and hence before the new contentColor is
     // provided by BottomNavigationTransition.
     val ripple = RippleIndication(bounded = false, color = selectedContentColor)
-
     // TODO This composable has magic behavior within a Row; reconsider this behavior later
     Box(
         with(ColumnScope) {
@@ -231,16 +226,13 @@ private fun BottomNavigationItemBaselineLayout(
         )
 
         // If the label is empty, just place the icon.
-        if (labelPlaceable.width == 0 &&
-            labelPlaceable.height == 0
-        ) {
+        if (labelPlaceable.width == 0) {
             placeIcon(iconPlaceable, constraints)
         } else {
             placeLabelAndIcon(
                 labelPlaceable,
                 iconPlaceable,
-                constraints,
-                iconPositionAnimationProgress
+                constraints
             )
         }
     }
@@ -253,11 +245,11 @@ private fun MeasureScope.placeIcon(
     iconPlaceable: Placeable,
     constraints: Constraints
 ): MeasureScope.MeasureResult {
-    val height = constraints.maxHeight
+    val height = constraints.minHeight
     val width = constraints.maxWidth
     val iconY = (height - iconPlaceable.height) / 2
     val iconX = (width - iconPlaceable.width) / 2
-    return layout(iconPlaceable.width, height) {
+    return layout(width, height) {
         iconPlaceable.placeRelative(iconX, iconY)
     }
 }
@@ -285,8 +277,7 @@ private fun MeasureScope.placeIcon(
 private fun MeasureScope.placeLabelAndIcon(
     labelPlaceable: Placeable,
     iconPlaceable: Placeable,
-    constraints: Constraints,
-    @FloatRange(from = 0.0, to = 1.0) iconPositionAnimationProgress: Float
+    constraints: Constraints
 ): MeasureScope.MeasureResult {
     val height = constraints.maxHeight
 
@@ -297,32 +288,32 @@ private fun MeasureScope.placeLabelAndIcon(
     val baselineOffset = CombinedItemTextBaseline.toIntPx()
 
     // Label should be [baselineOffset] from the bottom
-    val labelY = height - baseline - baselineOffset
+    // val labelY = height - baseline - baselineOffset
 
-    val unselectedIconY = (height - iconPlaceable.height) / 2
+    // val unselectedIconY = (height - iconPlaceable.height) / 2
 
     // Icon should be [baselineOffset] from the text baseline, which is itself
     // [baselineOffset] from the bottom
-    val selectedIconY = height - (baselineOffset * 2) - iconPlaceable.height
-
-    val containerWidth = max(labelPlaceable.width, iconPlaceable.width)
+    // val selectedIconY = height - (baselineOffset * 2) - iconPlaceable.height
+    val selectedIconY = (height - iconPlaceable.height) / 2
+    val labelY = selectedIconY + iconPlaceable.height
+    //val containerWidth = max(labelPlaceable.width, iconPlaceable.width)
+    val containerWidth = constraints.maxWidth
 
     val labelX = (containerWidth - labelPlaceable.width) / 2
     val iconX = (containerWidth - iconPlaceable.width) / 2
 
     // How far the icon needs to move between unselected and selected states
-    val iconDistance = unselectedIconY - selectedIconY
+    // val iconDistance = unselectedIconY - selectedIconY
 
     // When selected the icon is above the unselected position, so we will animate moving
     // downwards from the selected state, so when progress is 1, the total distance is 0, and we
     // are at the selected state.
-    val offset = (iconDistance * (1 - iconPositionAnimationProgress)).roundToInt()
+    // val offset = (iconDistance * (1 - iconPositionAnimationProgress)).roundToInt()
 
     return layout(containerWidth, height) {
-        if (iconPositionAnimationProgress != 0f) {
-            labelPlaceable.placeRelative(labelX, labelY + offset)
-        }
-        iconPlaceable.placeRelative(iconX, selectedIconY + offset)
+        labelPlaceable.placeRelative(labelX, labelY)
+        iconPlaceable.placeRelative(iconX, selectedIconY)
     }
 }
 
@@ -334,13 +325,13 @@ private val NavigationRailWidth = 72.dp
 /**
  * Default elevation of a [BottomNavigation] component
  */
-private val NavigationRailElevation = 8.dp
+private val NavigationRailElevation = 0.dp
 
 /**
  * The space between the text baseline and the bottom of the [NavigationRailItem], and between
  * the text baseline and the bottom of the icon placed above it.
  */
-private val CombinedItemTextBaseline = 12.dp
+private val CombinedItemTextBaseline = 2.dp
 
 /**
  * [VectorizedAnimationSpec] controlling the transition between unselected and selected
@@ -348,7 +339,7 @@ private val CombinedItemTextBaseline = 12.dp
  */
 private val NavigationRailAnimationSpec = TweenSpec<Float>(
     durationMillis = 300,
-    easing = FastOutSlowInEasing
+    easing = LinearOutSlowInEasing
 )
 
 /**

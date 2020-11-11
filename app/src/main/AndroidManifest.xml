@@ -11,19 +11,7 @@
         android:theme="@style/Theme.ComposeBottomNavBackdrop">
         <activity
             android:name=".HorizontalBackdropActivity"
-            android:theme="@style/Theme.ComposeBottomNavBackdrop.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".BackdropScaffoldActivity"
-            android:theme="@style/Theme.ComposeBottomNavBackdrop.NoActionBar" />
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
+            android:screenOrientation="landscape"
             android:theme="@style/Theme.ComposeBottomNavBackdrop.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
