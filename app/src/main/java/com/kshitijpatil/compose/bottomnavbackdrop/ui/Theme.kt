@@ -34,7 +34,6 @@ fun ComposeBottomNavBackdropTheme(darkTheme: Boolean = isSystemInDarkTheme(), co
     } else {
         LightColorPalette
     }
-
     MaterialTheme(
             colors = colors,
             typography = typography,
