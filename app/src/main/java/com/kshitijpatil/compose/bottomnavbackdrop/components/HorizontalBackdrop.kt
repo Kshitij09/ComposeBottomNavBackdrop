@@ -36,11 +36,11 @@ import androidx.compose.ui.unit.offset
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.zIndex
+import com.kshitijpatil.compose.bottomnavbackdrop.components.BackdropValue.Concealed
+import com.kshitijpatil.compose.bottomnavbackdrop.components.BackdropValue.Revealed
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import com.kshitijpatil.compose.bottomnavbackdrop.components.BackdropValue.Revealed
-import com.kshitijpatil.compose.bottomnavbackdrop.components.BackdropValue.Concealed
 
 /**
  * Possible values of [BackdropScaffoldState].
@@ -201,17 +201,17 @@ fun rememberBackdropScaffoldState(
  * [BottomSheetScaffold].
  *
  * Either the back layer or front layer can be active at a time. When the front layer is active,
- * it sits at an offset below the top of the screen. This is the [peekHeight] and defaults to
+ * it sits at an offset below the top of the screen. This is the [peekWidth] and defaults to
  * 56dp which is the default app bar height. When the front layer is inactive, it sticks to the
  * height of the back layer's content if [stickyFrontLayer] is set to `true` and the height of
- * the front layer exceeds the [headerHeight], and otherwise it minimizes to the [headerHeight].
+ * the front layer exceeds the [headerWidth], and otherwise it minimizes to the [headerWidth].
  * To switch between the back layer and front layer, you can either swipe on the front layer if
  * [gesturesEnabled] is set to `true` or use any of the methods in [BackdropScaffoldState].
  *
  * The scaffold also contains an app bar, which by default is placed above the back layer's
  * content. If [persistentAppBar] is set to `false`, then the backdrop will not show the app bar
  * when the back layer is revealed; instead it will switch between the app bar and the provided
- * content with an animation. For best results, the [peekHeight] should match the app bar height.
+ * content with an animation. For best results, the [peekWidth] should match the app bar height.
  * To show a snackbar, use the method `showSnackbar` of [BackdropScaffoldState.snackbarHostState].
  *
  * A simple example of a backdrop scaffold looks like this:
@@ -221,8 +221,8 @@ fun rememberBackdropScaffoldState(
  * @param modifier Optional [Modifier] for the root of the scaffold.
  * @param scaffoldState The state of the scaffold.
  * @param gesturesEnabled Whether or not the backdrop can be interacted with by gestures.
- * @param peekHeight The height of the visible part of the back layer when it is concealed.
- * @param headerHeight The minimum height of the front layer when it is inactive.
+ * @param peekWidth The height of the visible part of the back layer when it is concealed.
+ * @param headerWidth The minimum height of the front layer when it is inactive.
  * @param persistentAppBar Whether the app bar should be shown when the back layer is revealed.
  * By default, it will always be shown above the back layer's content. If this is set to `false`,
  * the back layer will automatically switch between the app bar and its content with an animation.
@@ -241,7 +241,7 @@ fun rememberBackdropScaffoldState(
  * layer is revealed. If you set this to `Color.Transparent`, then a scrim will not be applied
  * and interaction with the front layer will not be blocked when the back layer is revealed.
  * @param snackbarHost The component hosting the snackbars shown inside the scaffold.
- * @param appBar App bar for the back layer. Make sure that the [peekHeight] is equal to the
+ * @param appBar App bar for the back layer. Make sure that the [peekWidth] is equal to the
  * height of the app bar, so that the app bar is fully visible. Consider using [TopAppBar] but
  * set the elevation to 0dp and background color to transparent as a surface is already provided.
  * @param backLayerContent The content of the back layer.
@@ -253,8 +253,8 @@ fun HorizontalBackdropScaffold(
     modifier: Modifier = Modifier,
     scaffoldState: BackdropScaffoldState = rememberBackdropScaffoldState(Concealed),
     gesturesEnabled: Boolean = true,
-    peekHeight: Dp = HorizontalBackdropScaffoldConstants.DefaultPeekHeight,
-    headerHeight: Dp = HorizontalBackdropScaffoldConstants.DefaultHeaderHeight,
+    peekWidth: Dp = HorizontalBackdropScaffoldConstants.DefaultPeekWidth,
+    headerWidth: Dp = HorizontalBackdropScaffoldConstants.DefaultHeaderWidth,
     stickyFrontLayer: Boolean = true,
     backLayerBackgroundColor: Color = MaterialTheme.colors.primary,
     backLayerContentColor: Color = contentColorFor(backLayerBackgroundColor),
@@ -267,14 +267,14 @@ fun HorizontalBackdropScaffold(
     backLayerContent: @Composable () -> Unit,
     frontLayerContent: @Composable () -> Unit
 ) {
-    val peekHeightPx = with(DensityAmbient.current) { peekHeight.toPx() }
-    val headerHeightPx = with(DensityAmbient.current) { headerHeight.toPx() }
+    val peekWidthPx = with(DensityAmbient.current) { peekWidth.toPx() }
+    val headerWidthPx = with(DensityAmbient.current) { headerWidth.toPx() }
 
     val backLayer = @Composable {
         BackLayerTransition(scaffoldState.targetValue, backLayerContent)
     }
     val calculateBackLayerConstraints: (Constraints) -> Constraints = {
-        it.copy(minWidth = 0, minHeight = 0).offset(vertical = -headerHeightPx.roundToInt())
+        it.copy(minWidth = 0, minHeight = 0).offset(horizontal = -headerWidthPx.roundToInt())
     }
 
     // Back layer
@@ -286,34 +286,33 @@ fun HorizontalBackdropScaffold(
             modifier.fillMaxSize(),
             backLayer,
             calculateBackLayerConstraints
-        ) { constraints, backLayerHeight ->
-            val fullHeight = constraints.maxHeight.toFloat()
-            var revealedHeight = fullHeight - headerHeightPx
+        ) { constraints, backLayerWidth ->
+            val fullWidth = constraints.maxWidth.toFloat()
+            var revealedWidth = fullWidth - headerWidthPx
             if (stickyFrontLayer) {
-                revealedHeight = min(revealedHeight, backLayerHeight)
+                revealedWidth = min(revealedWidth, backLayerWidth)
             }
 
             val swipeable = Modifier.swipeable(
                 state = scaffoldState,
                 anchors = mapOf(
-                    peekHeightPx to Concealed,
-                    revealedHeight to Revealed
+                    peekWidthPx to Concealed,
+                    revealedWidth to Revealed
                 ),
-                orientation = Orientation.Vertical,
+                orientation = Orientation.Horizontal,
                 enabled = gesturesEnabled
             )
 
             // Front layer
             Surface(
-                Modifier.offsetPx(y = scaffoldState.offset).then(swipeable),
+                Modifier.offsetPx(x = scaffoldState.offset).then(swipeable),
                 shape = frontLayerShape,
                 elevation = frontLayerElevation,
                 color = frontLayerBackgroundColor,
                 contentColor = frontLayerContentColor
             ) {
-                Box(Modifier.padding(bottom = peekHeight)) {
+                Box(Modifier.padding(end = peekWidth)) {
                     frontLayerContent()
-
                     Scrim(
                         color = frontLayerScrimColor,
                         onDismiss = { scaffoldState.conceal() },
@@ -328,8 +327,8 @@ fun HorizontalBackdropScaffold(
                     .zIndex(Float.POSITIVE_INFINITY)
                     .padding(
                         bottom = if (scaffoldState.isRevealed &&
-                            revealedHeight == fullHeight - headerHeightPx
-                        ) headerHeight else 0.dp
+                            revealedWidth == fullWidth - headerWidthPx
+                        ) headerWidth else 0.dp
                     ),
                 alignment = Alignment.BottomCenter
             ) {
@@ -403,11 +402,11 @@ private fun BackdropStack(
             subcompose(BackdropLayers.Back, backLayer).first()
                 .measure(calculateBackLayerConstraints(constraints))
 
-        val backLayerHeight = backLayerPlaceable.height.toFloat()
+        val backLayerWidth = backLayerPlaceable.width.toFloat()
 
         val placeables =
             subcompose(BackdropLayers.Front) {
-                frontLayer(constraints, backLayerHeight)
+                frontLayer(constraints, backLayerWidth)
             }.fastMap { it.measure(constraints) }
 
         var maxWidth = max(constraints.minWidth, backLayerPlaceable.width)
@@ -434,12 +433,12 @@ object HorizontalBackdropScaffoldConstants {
     /**
      * The default peek height of the back layer.
      */
-    val DefaultPeekHeight = 56.dp
+    val DefaultPeekWidth = 72.dp
 
     /**
      * The default header height of the front layer.
      */
-    val DefaultHeaderHeight = 48.dp
+    val DefaultHeaderWidth = 60.dp
 
     /**
      * The default shape of the front layer.
@@ -447,12 +446,12 @@ object HorizontalBackdropScaffoldConstants {
     @Composable
     val DefaultFrontLayerShape: Shape
         get() = MaterialTheme.shapes.large
-            .copy(topLeft = CornerSize(16.dp), topRight = CornerSize(16.dp))
+            .copy(topLeft = CornerSize(16.dp), bottomLeft = CornerSize(16.dp))
 
     /**
      * The default elevation of the front layer.
      */
-    val DefaultFrontLayerElevation = 1.dp
+    val DefaultFrontLayerElevation = 2.dp
 
     /**
      * The default color of the scrim applied to the front layer.
