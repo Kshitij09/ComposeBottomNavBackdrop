@@ -29,6 +29,10 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
         useIR = true
+
+        // Use experimental APIs
+        freeCompilerArgs += '-Xopt-in=kotlin.RequiresOptIn'
+        freeCompilerArgs += '-Xallow-jvm-ir-dependencies'
     }
     buildFeatures {
         compose true
@@ -50,6 +54,11 @@ dependencies {
     implementation "androidx.ui:ui-tooling:$compose_version"
     implementation "androidx.navigation:navigation-compose:$nav_compose_version"
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06'
+
+    repositories {
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    }
+    implementation "dev.chrisbanes.accompanist:accompanist-insets:0.3.3-SNAPSHOT"
 
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
